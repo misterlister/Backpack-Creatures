@@ -1,2 +1,2 @@
-# Backpack-Creatures
+# Creature Summoner
 A Pokemon clone game
