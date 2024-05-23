@@ -26,78 +26,6 @@ const movePosition = {
     y: 0
 }
 
-class Sprite {
-    constructor({position, velocity, image, frames = { max: 1 }}) {
-        this.position = position
-        this.image = image
-        this.velocity = velocity
-        this.frames = frames
-        if (image) {
-            this.image.onload = () => {
-                this.width = this.image.width / this.frames.max
-                this.height = this.image.height
-            }
-        }
-    }
-
-    getx() {
-        return this.position.x + movePosition.x
-    }
-
-    gety() {
-        return this.position.y + movePosition.y
-    }
-
-    getTop() {
-        return this.gety()
-    }
-
-    getLeft() {
-        return this.getx()
-    }
-
-    getRight() {
-        return this.getx() + this.width
-    }
-
-    getBottom() {
-        return this.gety() + this.height
-    }
-
-    draw() {
-        ct.drawImage(
-            this.image, 
-            0,
-            0,
-            this.width,
-            this.height,
-            this.getx(),
-            this.gety(),
-            this.width,
-            this.height,
-        )
-    }
-}
-
-class Boundary extends Sprite {
-    constructor({position}) {
-        super({position})
-        this.width = tileSize
-        this.height = tileSize
-    }
-
-    draw() {
-        ct.fillStyle = 'red'
-        ct.fillRect(
-            this.position.x + movePosition.x, 
-            this.position.y + movePosition.y, 
-            this.width, 
-            this.height
-        )
-    }
-}
-
-
 protoMap1CollisionsArray.forEach((row, i) => {
     row.forEach((symbol, j) => {
         if (symbol === 1) {
@@ -116,54 +44,11 @@ protoMap1CollisionsArray.forEach((row, i) => {
 const protoMap1 = new Image()
 protoMap1.src = './img/ProtoMap1_image.png'
 
+const protoMap1fg = new Image()
+protoMap1fg.src = './img/ProtoMap1_foreground.png'
+
 const playerImage = new Image()
 playerImage.src = './img/playerDown.png'
-
-class PlayerSprite extends Sprite {
-    constructor({position, velocity, image, frames = { max: 1 }}) {
-        super({position, velocity, image, frames})
-        this.image.onload = () => {
-            this.width = this.image.width / this.frames.max
-            this.height = this.image.height
-            this.position.x = canvas.width/2 - this.width / 2
-            this.position.y = canvas.height/2 - this.height / 2
-        }
-    }
-
-    //override base getx and gety to ignore movePosition
-    getx() {
-        return this.position.x
-    }
-
-    gety() {
-        return this.position.y
-    }
-
-    //adjust player y position to prevent excess collisions
-    getTop() {
-        return this.gety() + (this.height / 2) + 6
-    }
-
-    getBottom() {
-        return this.gety() + this.height - 4
-    }
-
-    draw() {
-        ct.drawImage(
-            this.image, 
-            0,
-            0,
-            this.width,
-            this.height,
-            this.position.x, 
-            this.position.y,
-            this.width,
-            this.height,
-        )
-    }
-}
-
-
 
 const background = new Sprite({
     position: {
@@ -172,6 +57,14 @@ const background = new Sprite({
     },
     image: protoMap1,
     velocity: 4
+})
+
+const foreground = new Sprite({
+    position: {
+        x: offset.x,
+        y: offset.y,
+    },
+    image: protoMap1fg,
 })
 
 const player = new PlayerSprite({
@@ -207,24 +100,63 @@ function rectangularCollision(rect1, rect2) {
     )
 }
 
+function checkHorizontalMoveCollision(modifier = 1) {
+    for (let i = 0; i < boundaries.length; i++) {
+        const currBoundary = new Boundary({position: {
+            x: boundaries[i].position.x + (modifier * background.velocity),
+            y: boundaries[i].position.y
+        }})
+        if (rectangularCollision(player, currBoundary)) return true
+    }
+    return false
+}
+
+function checkVerticalMoveCollision(modifier = 1) {
+    for (let i = 0; i < boundaries.length; i++) {
+        const currBoundary = new Boundary({position: {
+            x: boundaries[i].position.x,
+            y: boundaries[i].position.y + (modifier * background.velocity)
+        }})
+        if (rectangularCollision(player, currBoundary)) return true 
+    }
+    return false
+}
+
 function animate() {
     window.requestAnimationFrame(animate)
     background.draw()
-    boundaries.forEach(boundary => {
-        boundary.draw()
-        if (rectangularCollision(player, boundary)) console.log("collision")
-    })
     
-    player.draw()
+    /*boundaries.forEach(boundary => {
+        boundary.draw()
+    })*/
 
-    if (keys.w.pressed && lastKey === 'w') movePosition.y += background.velocity
-    else if (keys.a.pressed && lastKey === 'a') movePosition.x += background.velocity
-    else if (keys.s.pressed && lastKey === 's') movePosition.y -= background.velocity
-    else if (keys.d.pressed && lastKey === 'd') movePosition.x -= background.velocity
-    else if (keys.w.pressed) movePosition.y += background.velocity
-    else if (keys.a.pressed) movePosition.x += background.velocity
-    else if (keys.s.pressed) movePosition.y -= background.velocity
-    else if (keys.d.pressed) movePosition.x -= background.velocity
+    player.draw()
+    foreground.draw()
+
+    if (keys.w.pressed && lastKey === 'w') {
+        if (!checkVerticalMoveCollision()) movePosition.y += background.velocity
+    }
+    else if (keys.a.pressed && lastKey === 'a') {
+        if (!checkHorizontalMoveCollision()) movePosition.x += background.velocity
+    }
+    else if (keys.s.pressed && lastKey === 's') {
+        if (!checkVerticalMoveCollision(-1)) movePosition.y -= background.velocity
+    }
+    else if (keys.d.pressed && lastKey === 'd') {
+        if (!checkHorizontalMoveCollision(-1)) movePosition.x -= background.velocity
+    }
+    else if (keys.w.pressed) {
+        if (!checkVerticalMoveCollision()) movePosition.y += background.velocity
+    }
+    else if (keys.a.pressed) {
+        if (!checkHorizontalMoveCollision()) movePosition.x += background.velocity
+    }
+    else if (keys.s.pressed) {
+        if (!checkVerticalMoveCollision(-1)) movePosition.y -= background.velocity
+    }
+    else if (keys.d.pressed) {
+        if (!checkHorizontalMoveCollision(-1)) movePosition.x -= background.velocity
+    }
 }
 
 animate()
