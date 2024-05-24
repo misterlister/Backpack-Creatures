@@ -47,8 +47,17 @@ protoMap1.src = './img/ProtoMap1_image.png'
 const protoMap1fg = new Image()
 protoMap1fg.src = './img/ProtoMap1_foreground.png'
 
-const playerImage = new Image()
-playerImage.src = './img/playerDown.png'
+const playerUpImage = new Image()
+playerUpImage.src = './img/playerUp.png'
+
+const playerLeftImage = new Image()
+playerLeftImage.src = './img/playerLeft.png'
+
+const playerRightImage = new Image()
+playerRightImage.src = './img/playerRight.png'
+
+const playerDownImage = new Image()
+playerDownImage.src = './img/playerDown.png'
 
 const background = new Sprite({
     position: {
@@ -69,9 +78,15 @@ const foreground = new Sprite({
 
 const player = new PlayerSprite({
     position: {},
-    image: playerImage,
+    image: playerDownImage,
     frames: {
         max: 4
+    },
+    sprites: {
+        up: playerUpImage,
+        left: playerLeftImage,
+        right: playerRightImage,
+        down: playerDownImage
     }
 })
 
@@ -134,29 +149,37 @@ function animate() {
     foreground.draw()
 
     if (keys.w.pressed && lastKey === 'w') {
+        player.goUp()
         if (!checkVerticalMoveCollision()) movePosition.y += background.velocity
     }
     else if (keys.a.pressed && lastKey === 'a') {
+        player.goLeft()
         if (!checkHorizontalMoveCollision()) movePosition.x += background.velocity
     }
     else if (keys.s.pressed && lastKey === 's') {
+        player.goDown()
         if (!checkVerticalMoveCollision(-1)) movePosition.y -= background.velocity
     }
     else if (keys.d.pressed && lastKey === 'd') {
+        player.goRight()
         if (!checkHorizontalMoveCollision(-1)) movePosition.x -= background.velocity
     }
     else if (keys.w.pressed) {
+        player.goUp()
         if (!checkVerticalMoveCollision()) movePosition.y += background.velocity
     }
     else if (keys.a.pressed) {
+        player.goLeft()
         if (!checkHorizontalMoveCollision()) movePosition.x += background.velocity
     }
     else if (keys.s.pressed) {
+        player.goDown()
         if (!checkVerticalMoveCollision(-1)) movePosition.y -= background.velocity
     }
     else if (keys.d.pressed) {
+        player.goRight()
         if (!checkHorizontalMoveCollision(-1)) movePosition.x -= background.velocity
-    }
+    } else player.stop()
 }
 
 animate()
