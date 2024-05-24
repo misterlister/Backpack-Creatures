@@ -1,9 +1,12 @@
 class Sprite {
-    constructor({position, velocity, image, frames = { max: 1 }}) {
+    constructor({position, velocity, image, sprites = [], frames = { max: 1 }, animation_speed = 10}) {
         this.position = position
         this.image = image
         this.velocity = velocity
-        this.frames = frames
+        this.frames = { ...frames, val: 0, elapsed: 0 }
+        this.animation_speed = animation_speed
+        this.sprites = sprites
+        this.moving = false
         if (image) {
             this.image.onload = () => {
                 this.width = this.image.width / this.frames.max
@@ -39,7 +42,7 @@ class Sprite {
     draw() {
         ct.drawImage(
             this.image, 
-            0,
+            this.frames.val * this.width,
             0,
             this.width,
             this.height,
@@ -48,6 +51,48 @@ class Sprite {
             this.width,
             this.height,
         )
+        if (!this.moving) return
+        if (this.frames.max > 1) {
+            this.frames.elapsed++
+            if (this.frames.elapsed % this.animation_speed === 0) {
+                if (this.frames.val < this.frames.max - 1) this.frames.val++
+                else this.frames.val = 0
+            }
+        }
+    }
+
+    stop() {
+        this.moving = false
+        this.frames.val = 0
+        this.frames.elapsed = 0
+    }
+
+    goUp() {
+        // If starting from standing still, change to a movement frame
+        if (!this.moving) this.frames.val = this.frames.max - 1
+        this.moving = true
+        this.image = this.sprites.up
+    }
+
+    goLeft() {
+        // If starting from standing still, change to a movement frame
+        if (!this.moving) this.frames.val = this.frames.max - 1
+        this.moving = true
+        this.image = this.sprites.left
+    }
+
+    goRight() {
+        // If starting from standing still, change to a movement frame
+        if (!this.moving) this.frames.val = this.frames.max - 1
+        this.moving = true
+        this.image = this.sprites.right
+    }
+
+    goDown() {
+        // If starting from standing still, change to a movement frame
+        if (!this.moving) this.frames.val = this.frames.max - 1
+        this.moving = true
+        this.image = this.sprites.down
     }
 }
 
@@ -70,8 +115,8 @@ class Boundary extends Sprite {
 }
 
 class PlayerSprite extends Sprite {
-    constructor({position, velocity, image, frames = { max: 1 }}) {
-        super({position, velocity, image, frames})
+    constructor({position, velocity, image, sprites = [], frames = { max: 1 }}) {
+        super({position, velocity, image, sprites, frames})
         this.image.onload = () => {
             this.width = this.image.width / this.frames.max
             this.height = this.image.height
@@ -104,19 +149,5 @@ class PlayerSprite extends Sprite {
 
     getBottom() {
         return this.gety() + this.height - 4
-    }
-
-    draw() {
-        ct.drawImage(
-            this.image, 
-            0,
-            0,
-            this.width,
-            this.height,
-            this.position.x, 
-            this.position.y,
-            this.width,
-            this.height,
-        )
     }
 }
